@@ -17,7 +17,7 @@ export function listDreamsLocal() {
  */
 export const getDreamsAsync = async () => {
   try {
-    const res = await axios.get(${process.env.FASTAPI_URL}/dreams);
+    const res = await axios.get(`${process.env.FASTAPI_URL}/dreams`);
     return res.data;
   } catch (err) {
     console.error("Error fetching dreams:", err);
@@ -27,7 +27,7 @@ export const getDreamsAsync = async () => {
 
 export const createDreamAsync = async (data: any) => {
   try {
-    const res = await axios.post(${process.env.FASTAPI_URL}/dreams, data);
+    const res = await axios.post(`${process.env.FASTAPI_URL}/dreams`, data);
     return res.data;
   } catch (err) {
     console.error("Error creating dream:", err);
