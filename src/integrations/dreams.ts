@@ -1,21 +1,20 @@
-// apps/api/src/integrations/dreams.ts
 import axios from "axios";
 
-/**
- * Synchronous local functions
+/*
+ * FUND A DREAM (SYNC FALLBACK)
  */
-export function createDreamLocal() {
+export function createFundDream() {
   return "created";
 }
 
-export function listDreamsLocal() {
+export function listFundDreams() {
   return "dreams";
 }
 
-/**
- * Async functions interacting with FastAPI backend
+/*
+ * FUND A DREAM (FASTAPI)
  */
-export const getDreamsAsync = async () => {
+export const getFundDreams = async () => {
   try {
     const res = await axios.get(`${process.env.FASTAPI_URL}/dreams`);
     return res.data;
@@ -25,7 +24,7 @@ export const getDreamsAsync = async () => {
   }
 };
 
-export const createDreamAsync = async (data: any) => {
+export const createFundDreamAsync = async (data: any) => {
   try {
     const res = await axios.post(`${process.env.FASTAPI_URL}/dreams`, data);
     return res.data;

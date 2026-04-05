@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FastAPIService } from './fastapi.service';
-import { getDreams, createDream } from './dreams';   // Correct relative path from integrations/ to src/dreams.ts
+import { getFundDreams, createFundDreamAsync } from './dreams';   // Correct relative path from integrations/ to src/dreams.ts
 
 @Module({
   providers: [
