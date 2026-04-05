@@ -3,10 +3,10 @@ import axios from 'axios'
 
 @Injectable()
 export class FastAPIService {
-  private base = process.env.FASTAPI_URL
+  private readonly base = process.env.FASTAPI_URL?.replace(/\/$/, '') || 'http://localhost:8000';
 
   async getDreams() {
-    return axios.get(`${this.base}/dreams`)
+    return (await axios.get(`${this.base}/dreams`)).data;
   }
 
   async createDream(data: any) {
