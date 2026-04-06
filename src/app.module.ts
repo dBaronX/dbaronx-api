@@ -7,8 +7,15 @@ import { OrderSyncController } from './order-sync.controller';
 import { IntegrationsModule } from './integrations/integrations.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), IntegrationsModule],
-  controllers: [AppController, CheckoutController, OrderSyncController],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    IntegrationsModule,
+  ],
+  controllers: [
+    AppController,
+    CheckoutController,
+    OrderSyncController,
+  ],
   providers: [AppService],
 })
 export class AppModule {}
