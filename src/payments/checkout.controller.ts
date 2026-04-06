@@ -10,7 +10,7 @@ const stripeKey = isProd
 
 if (!stripeKey) throw new Error('❌ STRIPE KEY NOT FOUND IN ENV');
 
-const stripe = new Stripe(stripeKey, { apiVersion: '2025-03-25' });
+const stripe = new Stripe(stripeKey, { apiVersion: "2026-03-25.dahlia" });
 
 @Controller('checkout')
 export class CheckoutController {
