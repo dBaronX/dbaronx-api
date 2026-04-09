@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   Param,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
@@ -14,7 +15,12 @@ export class OrdersController {
 
   @Get('me')
   async getMyOrders(@Headers('authorization') authorization?: string) {
-    return this.ordersService.getMyOrders(authorization);
+    const orders = await this.ordersService.getMyOrders(authorization);
+    return {
+      success: true,
+      count: orders.length,
+      orders,
+    };
   }
 
   @Get('me/:id')
@@ -22,7 +28,11 @@ export class OrdersController {
     @Param('id') id: string,
     @Headers('authorization') authorization?: string,
   ) {
-    return this.ordersService.getOrderByIdForUser(id, authorization);
+    const order = await this.ordersService.getMyOrderById(id, authorization);
+    return {
+      success: true,
+      order,
+    };
   }
 
   @Post()
@@ -44,6 +54,55 @@ export class OrdersController {
     },
     @Headers('authorization') authorization?: string,
   ) {
-    return this.ordersService.createOrder(body, authorization);
+    const order = await this.ordersService.createOrder(body, authorization);
+    return {
+      success: true,
+      order,
+    };
+  }
+
+  @Get('admin/awaiting-fulfillment')
+  async getAwaitingFulfillmentOrders() {
+    const orders = await this.ordersService.getAwaitingFulfillmentOrders();
+    return {
+      success: true,
+      count: orders.length,
+      orders,
+    };
+  }
+
+  @Patch('admin/:id/mark-supplier-ordered')
+  async markSupplierOrdered(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      supplierSource: string;
+      supplierOrderId?: string;
+      trackingNumber?: string;
+      shippingProvider?: string;
+      notes?: string;
+    },
+  ) {
+    const order = await this.ordersService.markSupplierOrdered(id, body);
+    return {
+      success: true,
+      order,
+    };
+  }
+
+  @Patch('admin/:id/add-tracking')
+  async addTracking(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      trackingNumber: string;
+      shippingProvider?: string;
+    },
+  ) {
+    const order = await this.ordersService.addTracking(id, body);
+    return {
+      success: true,
+      order,
+    };
   }
 }

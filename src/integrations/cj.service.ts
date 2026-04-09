@@ -23,7 +23,7 @@ async getAccessToken() {
   const data = await response.json();
 
   if (data.code !== 200) {
-    throw new Error(CJ token error: ${JSON.stringify(data)});
+    throw new Error(`CJ token error: ${JSON.stringify(data)}`);
   }
 
   return data.data.accessToken;

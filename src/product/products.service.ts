@@ -27,7 +27,7 @@ export class ProductsService {
 
     if (query?.search) {
       qb = qb.or(
-        name.ilike.%${query.search}%,short_description.ilike.%${query.search}%,description.ilike.%${query.search}%,
+        `name.ilike.%${query.search}%,short_description.ilike.%${query.search}%,description.ilike.%${query.search}%`,
       );
     }
 
@@ -37,7 +37,7 @@ export class ProductsService {
 
     const { data, error } = await qb;
     if (error) {
-      throw new Error(Failed to fetch products: ${error.message});
+      throw new Error(`Failed to fetch products: ${error.message}`);
     }
 
     return data ?? [];

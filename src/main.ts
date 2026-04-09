@@ -1,14 +1,9 @@
-//apps/api/src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    rawBody: true,
-  });
-
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const app = await NestFactory.create(AppModule);
 
   const allowedOrigins = [
     'https://dbaronx.com',
@@ -19,27 +14,32 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        return callback(null, true);
+      }
 
       try {
         const url = new URL(origin);
-        const isAllowed =
+        const allowed =
           allowedOrigins.includes(origin) ||
           /\.onrender\.com$/i.test(url.hostname);
 
-        if (isAllowed) return callback(null, true);
+        if (allowed) {
+          return callback(null, true);
+        }
 
-        return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+        return callback(new Error(`Blocked by CORS: ${origin}`), false);
       } catch {
-        return callback(new Error(`Invalid origin: ${origin}`), false);
+        return callback(new Error(`Invalid CORS origin: ${origin}`), false);
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'stripe-signature'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.setGlobalPrefix('api');
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -48,8 +48,10 @@ async function bootstrap() {
     }),
   );
 
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   await app.listen(port, '0.0.0.0');
-  console.log(`dBaronX API running on port ${port}`);
+
+  console.log(`dBaronX NestJS gateway running on port ${port}`);
 }
 
 bootstrap();

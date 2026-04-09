@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ProductsService } from './products.service';
 
 @Controller('products')
@@ -7,21 +7,20 @@ export class ProductsController {
 
   @Get()
   async getProducts(
-    @Query('category') category?: string,
     @Query('search') search?: string,
+    @Query('category') category?: string,
     @Query('featured') featured?: string,
-    @Query('limit') limit?: string,
   ) {
-    return this.productsService.getProducts({
-      category,
+    const products = await this.productsService.getProducts({
       search,
+      category,
       featured: featured === 'true',
-      limit: limit ? parseInt(limit, 10) : undefined,
     });
-  }
 
-  @Get(':slug')
-  async getProductBySlug(@Param('slug') slug: string) {
-    return this.productsService.getProductBySlug(slug);
+    return {
+      success: true,
+      count: products.length,
+      products,
+    };
   }
 }
