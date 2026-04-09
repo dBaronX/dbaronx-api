@@ -1,52 +1,82 @@
-//checkout.controller.ts
-
-import { Controller, Post, Body } from '@nestjs/common';
-import Stripe from 'stripe';
-
-const isProd = process.env.NODE_ENV === 'production';
-const stripeKey = isProd 
-  ? process.env.STRIPE_SECRET_KEY_LIVE 
-  : process.env.STRIPE_SECRET_KEY_TEST;
-
-if (!stripeKey) throw new Error('❌ STRIPE KEY NOT FOUND IN ENV');
-
-const stripe = new Stripe(stripeKey, { apiVersion: "2026-03-25.dahlia" });
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Headers,
+  Post,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { OrdersService } from '../orders/orders.service';
+import { SupabaseService } from '../supabase/supabase.service';
+import { StripeService } from './stripe.service';
 
 @Controller('checkout')
 export class CheckoutController {
+  constructor(
+    private readonly stripeService: StripeService,
+    private readonly ordersService: OrdersService,
+    private readonly supabaseService: SupabaseService,
+    private readonly configService: ConfigService,
+  ) {}
+
   @Post()
-  async createCheckout(@Body() body: { amount: number; orderId?: string; user?: string }) {
-    if (!body.amount || body.amount <= 0) {
-      throw new Error('Invalid amount');
+  async createCheckout(
+    @Body() body: { orderId: string },
+    @Headers('authorization') authorization?: string,
+  ) {
+    if (!body.orderId) {
+      throw new BadRequestException('orderId is required');
     }
 
-    const siteUrl = isProd 
-      ? process.env.SITE_URL_PROD 
-      : process.env.SITE_URL_LOCAL;
+    const { dbUser } = await this.supabaseService.getAuthenticatedUser(authorization);
+    const order = await this.ordersService.getOrderById(body.orderId);
 
-    if (!siteUrl) {
-      throw new Error('❌ SITE URL NOT SET');
+    if (order.user_id !== dbUser.id) {
+      throw new BadRequestException('Order does not belong to this user');
     }
 
-    const session = await stripe.checkout.sessions.create({
+    if (order.payment_status === 'paid') {
+      throw new BadRequestException('Order is already paid');
+    }
+
+    const totalAmount = Number(order.total_amount || 0);
+    if (totalAmount <= 0) {
+      throw new BadRequestException('Invalid order total');
+    }
+
+    const appUrl =
+      this.configService.get<string>('SITE_URL_PROD') ||
+      this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
+      'https://dbaronx.com';
+
+    const session = await this.stripeService.client.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'dBaronX Product' },
-          unit_amount: body.amount * 100,
+      line_items: [
+        {
+          price_data: {
+            currency: String(order.currency || 'usd').toLowerCase(),
+            product_data: {
+              name: `dBaronX Order ${order.order_number || order.id}`,
+            },
+            unit_amount: Math.round(totalAmount * 100),
+          },
+          quantity: 1,
         },
-        quantity: 1,
-      }],
-      success_url: `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/cancel`,
+      ],
+      success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/cancel?order_id=${order.id}`,
       metadata: {
-        orderId: body.orderId || '',
-        user: body.user || '',
+        orderId: order.id,
+        userId: dbUser.id,
+        orderNumber: order.order_number || '',
       },
     });
 
-    return { url: session.url };
+    return {
+      checkoutUrl: session.url,
+      sessionId: session.id,
+      orderId: order.id,
+    };
   }
 }

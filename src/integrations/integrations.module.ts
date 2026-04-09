@@ -1,15 +1,12 @@
 import { Module } from '@nestjs/common';
-import { FastAPIService } from './fastapi.service';
-import { getFundDreams, createFundDreamAsync } from './dreams';   // Correct relative path from integrations/ to src/dreams.ts
+import { OrdersModule } from '../orders/orders.module';
+import { CjService } from './cj.service';
+import { OrderSyncController } from './order-sync.controller';
 
 @Module({
-  providers: [
-    FastAPIService,
-    // Add other providers here if you have more
-  ],
-  exports: [
-    FastAPIService,
-    // You can export the functions if needed by other modules
-  ],
+  imports: [OrdersModule],
+  providers: [CjService],
+  controllers: [OrderSyncController],
+  exports: [CjService],
 })
 export class IntegrationsModule {}
