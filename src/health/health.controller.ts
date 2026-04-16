@@ -1,13 +1,17 @@
 import { Controller, Get } from '@nestjs/common';
+import { HealthService } from './health.service';
 
-@Controller()
+@Controller('health')
 export class HealthController {
-  @Get('health')
-  health() {
-    return {
-      status: 'ok',
-      service: 'dbaronx-api',
-      timestamp: new Date().toISOString(),
-    };
+  constructor(private readonly healthService: HealthService) {}
+
+  @Get()
+  getHealth() {
+    return this.healthService.getHealth();
+  }
+
+  @Get('deep')
+  getDeepHealth() {
+    return this.healthService.getDeepHealth();
   }
 }

@@ -1,41 +1,37 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    cors: false,
+  });
 
-  const allowedOrigins = [
-    'https://dbaronx.com',
-    'https://www.dbaronx.com',
-    'http://localhost:3000',
-    'http://localhost:3001',
-  ];
+  const configService = app.get(ConfigService);
+  const frontendUrl = configService.get<string>('app.frontendUrl');
+  const port = configService.get<number>('app.port') ?? 3000;
 
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      try {
-        const url = new URL(origin);
-        const allowed =
-          allowedOrigins.includes(origin) ||
-          /\.onrender\.com$/i.test(url.hostname);
-
-        if (allowed) {
-          return callback(null, true);
-        }
-
-        return callback(new Error(`Blocked by CORS: ${origin}`), false);
-      } catch {
-        return callback(new Error(`Invalid CORS origin: ${origin}`), false);
-      }
-    },
+    origin: [
+      frontendUrl,
+      'https://dbaronx.com',
+      'https://www.dbaronx.com',
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ].filter(Boolean),
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  });
+
+  app.use((req: any, res: any, next: () => void) => {
+    req.requestId = req.headers['x-request-id'] || randomUUID();
+    res.setHeader('X-Request-Id', req.requestId);
+    next();
   });
 
   app.setGlobalPrefix('api');
@@ -43,15 +39,15 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      forbidNonWhitelisted: true,
       transform: true,
-      forbidNonWhitelisted: false,
     }),
   );
 
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-  await app.listen(port, '0.0.0.0');
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
-  console.log(`dBaronX NestJS gateway running on port ${port}`);
+  await app.listen(port, '0.0.0.0');
 }
 
 bootstrap();
