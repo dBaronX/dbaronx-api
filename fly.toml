@@ -1,27 +1,23 @@
-app = "dbaronx-NestJS"
-primary_region = "sin"
+# fly.toml app configuration file generated for dbaronx-nestjs on 2026-04-18T16:47:22Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-[env]
-HOST = "0.0.0.0"
-NODE_ENV = "production"
-PORT = "3000"
+app = 'dbaronx-nestjs'
+primary_region = 'ams'
+
+[build]
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = "off"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 1
-  processes = ["app"]
-
-[[http_service.checks]]
-  grace_period = "30s"
-  interval = "15s"
-  method = "GET"
-  path = "/api/health"
-  timeout = "10s"
+  min_machines_running = 0
+  processes = ['app']
 
 [[vm]]
-  cpu_kind = "shared"
+  memory = '1gb'
+  cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
